@@ -179,8 +179,32 @@ h1 {
   line-height: 0.99;
 }
 
-h1 span {
+h1 .headline-word {
+  display: inline-block;
+  animation: headline-arrive 650ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+h1 .headline-word--second {
+  animation-delay: 110ms;
+}
+
+h1 .headline-highlight {
+  position: relative;
+  display: inline-block;
   color: var(--lime);
+}
+
+h1 .headline-highlight::after {
+  position: absolute;
+  right: 0;
+  bottom: -0.07em;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--lime), transparent);
+  content: "";
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: headline-underline 650ms 420ms ease-out forwards;
 }
 
 .intro-copy {
@@ -746,6 +770,25 @@ h2 {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes headline-arrive {
+  from {
+    opacity: 0;
+    filter: blur(7px);
+    transform: translateY(0.28em);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes headline-underline {
+  to {
+    transform: scaleX(1);
   }
 }
 
