@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Draw a digit and recognize it instantly with a private, browser-based handwriting demo."
+    />
+    <meta name="theme-color" content="#0a0c12" />
+    <title>Digit Studio — Handwritten digit recognition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="digit-model.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Digit Studio home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M7 9.5h8.5a5 5 0 0 1 0 10H7v-10Z" />
+              <path d="M18 22.5h7" />
+              <path d="M21.5 19v7" />
+            </svg>
+          </span>
+          <span class="brand-name">digit<span>studio</span></span>
+        </a>
+        <div class="topbar-right">
+          <span class="offline-label"><span></span> Runs in your browser</span>
+          <a class="github-link" href="#how-it-works">How it works <span aria-hidden="true">↗</span></a>
+        </div>
+      </header>
+
+      <main>
+        <section class="intro" aria-labelledby="page-title">
+          <div class="eyebrow"><span class="eyebrow-line"></span> A tiny experiment in machine vision</div>
+          <h1 id="page-title">Every number<br />has a <span>handwritten</span> side.</h1>
+          <p class="intro-copy">
+            Sketch a digit, and let our little pattern engine take its best guess.
+            No uploads, no setup — just you and the canvas.
+          </p>
+        </section>
+
+        <section class="studio-grid" aria-label="Digit recognition studio">
+          <section class="draw-card panel" aria-labelledby="draw-heading">
+            <div class="card-heading">
+              <div>
+                <div class="section-kicker">01 <span>/</span> YOUR CANVAS</div>
+                <h2 id="draw-heading">Draw a digit</h2>
+              </div>
+              <span class="canvas-hint"><span class="hint-dot"></span> 0—9</span>
+            </div>
+
+            <div class="canvas-wrap">
+              <canvas
+                id="drawing-canvas"
+                width="560"
+                height="560"
+                aria-label="Drawing area. Draw a single digit from zero to nine."
+                role="img"
+              ></canvas>
+              <div class="canvas-placeholder" id="canvas-placeholder" aria-hidden="true">
+                <span class="placeholder-number">8</span>
+                <span class="placeholder-label">start drawing here</span>
+              </div>
+              <span class="canvas-corner corner-tl" aria-hidden="true"></span>
+              <span class="canvas-corner corner-tr" aria-hidden="true"></span>
+              <span class="canvas-corner corner-bl" aria-hidden="true"></span>
+              <span class="canvas-corner corner-br" aria-hidden="true"></span>
+            </div>
+
+            <div class="draw-tools">
+              <span class="draw-instruction"><span class="pen-icon" aria-hidden="true">↗</span> Draw with your mouse or finger</span>
+              <button class="text-button" id="clear-button" type="button" aria-label="Clear drawing">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M4.5 6h11M8 6V4.5h4V6m2.8 0-.6 9.5H5.8L5.2 6" />
+                  <path d="M8 8.5v4.5m4-4.5v4.5" />
+                </svg>
+                Clear
+              </button>
+            </div>
+
+            <button class="recognize-button" id="recognize-button" type="button" disabled>
+              <span>Recognize digit</span>
+              <span class="button-arrow" aria-hidden="true">↗</span>
+            </button>
+            <p class="keyboard-hint">TIP <span>·</span> Draw one digit in the center for the best result</p>
+          </section>
+
+          <section class="result-card panel" aria-labelledby="result-heading" aria-live="polite">
+            <div class="card-heading">
+              <div>
+                <div class="section-kicker">02 <span>/</span> THE GUESS</div>
+                <h2 id="result-heading">Recognition</h2>
+              </div>
+              <span class="engine-badge"><span></span> LOCAL ENGINE</span>
+            </div>
+
+            <div class="result-content" id="result-content">
+              <div class="result-empty" id="result-empty">
+                <div class="empty-art" aria-hidden="true">
+                  <span class="orbit orbit-one"></span>
+                  <span class="orbit orbit-two"></span>
+                  <span class="empty-spark spark-one"></span>
+                  <span class="empty-spark spark-two"></span>
+                  <span class="empty-question">?</span>
+                </div>
+                <p>Your prediction will<br />show up here.</p>
+              </div>
+              <div class="result-ready" id="result-ready" hidden>
+                <div class="prediction-label">MY BEST GUESS</div>
+                <div class="prediction-digit" id="prediction-digit">—</div>
+                <div class="prediction-caption" id="prediction-caption">Draw a digit to begin</div>
+                <div class="confidence-block">
+                  <div class="confidence-heading">
+                    <span>TOP MATCH</span>
+                    <span id="match-value">—</span>
+                  </div>
+                  <div class="confidence-track" aria-hidden="true">
+                    <span id="match-bar"></span>
+                  </div>
+                </div>
+                <div class="alternatives">
+                  <div class="alternatives-heading">OTHER POSSIBILITIES <span>RANKED</span></div>
+                  <div class="alternatives-list" id="alternatives-list"></div>
+                </div>
+              </div>
+            </div>
+            <div class="result-footer">
+              <span class="footer-icon" aria-hidden="true">✳</span>
+              <span>Just for fun — try different writing styles</span>
+            </div>
+          </section>
+        </section>
+
+        <section class="how-section" id="how-it-works">
+          <div class="how-divider"></div>
+          <div class="how-content">
+            <div class="how-label">A LITTLE<br />ABOUT IT</div>
+            <p>
+              Your drawing stays right here. Digit Studio uses a model trained on
+              handwritten digit samples — <strong>your sketch is never uploaded or saved.</strong>
+            </p>
+            <span class="privacy-mark"><span></span> PRIVATE BY DESIGN</span>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>MADE FOR THE LOVE OF LITTLE EXPERIMENTS</span>
+        <span>DIGIT STUDIO <span class="footer-year">· 01</span></span>
+      </footer>
+    </div>
+  </body>
+</html>
