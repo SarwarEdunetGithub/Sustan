@@ -15,7 +15,7 @@ const alternativesList = document.querySelector("#alternatives-list");
 
 const CANVAS_SIZE = 560;
 const MODEL_SIZE = 28;
-const CLASSIFIER_SIZE = 8;
+const CLASSIFIER_SIZE = 28;
 const INK_THRESHOLD = 218;
 let isDrawing = false;
 let hasInk = false;
@@ -124,8 +124,8 @@ function normalizeDrawing() {
   const scaledWidth = sourceSide * scale;
   const scaledHeight = sourceSide * scale;
   const targetCenter = (MODEL_SIZE - 1) / 2;
-  const centerX = ((massX / mass - sourceLeft) * scale) + pad;
-  const centerY = ((massY / mass - sourceTop) * scale) + pad;
+  const centerX = (massX / mass - sourceLeft) * scale;
+  const centerY = (massY / mass - sourceTop) * scale;
   const left = targetCenter - centerX;
   const top = targetCenter - centerY;
 
@@ -174,6 +174,8 @@ function classifyDigit(input) {
     activations = output;
   }
 
+  if (countHoles(input) === 1) activations[0] += 1;
+
   const maxLogit = Math.max(...activations);
   const probabilities = activations.map((value) => Math.exp(value - maxLogit));
   const probabilityTotal = probabilities.reduce((total, value) => total + value, 0);
@@ -181,6 +183,66 @@ function classifyDigit(input) {
   return probabilities
     .map((probability, digit) => ({ digit, probability: probability / probabilityTotal }))
     .sort((first, second) => second.probability - first.probability);
+}
+
+function countHoles(input) {
+  const outside = Array(input.length).fill(false);
+  const queue = Array(input.length);
+  let holes = 0;
+
+  function visit(start, visited) {
+    if (visited[start] || input[start] >= 0.35) return;
+    let head = 0;
+    let tail = 0;
+    visited[start] = true;
+    queue[tail] = start;
+    tail += 1;
+
+    while (head < tail) {
+      const current = queue[head];
+      head += 1;
+      const x = current % CLASSIFIER_SIZE;
+      const y = Math.floor(current / CLASSIFIER_SIZE);
+
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const nextX = x + dx;
+          const nextY = y + dy;
+          if (
+            nextX < 0 ||
+            nextX >= CLASSIFIER_SIZE ||
+            nextY < 0 ||
+            nextY >= CLASSIFIER_SIZE
+          ) {
+            continue;
+          }
+
+          const next = nextY * CLASSIFIER_SIZE + nextX;
+          if (visited[next] || input[next] >= 0.35) continue;
+          visited[next] = true;
+          queue[tail] = next;
+          tail += 1;
+        }
+      }
+    }
+  }
+
+  for (let index = 0; index < CLASSIFIER_SIZE; index += 1) {
+    visit(index, outside);
+    visit((CLASSIFIER_SIZE - 1) * CLASSIFIER_SIZE + index, outside);
+    visit(index * CLASSIFIER_SIZE, outside);
+    visit(index * CLASSIFIER_SIZE + CLASSIFIER_SIZE - 1, outside);
+  }
+
+  for (let index = 0; index < input.length; index += 1) {
+    if (!outside[index] && input[index] < 0.35) {
+      holes += 1;
+      visit(index, outside);
+    }
+  }
+
+  return holes;
 }
 
 function showResult(ranked) {
